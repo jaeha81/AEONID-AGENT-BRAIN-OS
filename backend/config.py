@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 
 class Settings(BaseSettings):
@@ -7,7 +7,6 @@ class Settings(BaseSettings):
     obsidian_vault_path: str = str(Path(__file__).parent.parent / "EONID-BRAIN")
     upload_dir: str = str(Path(__file__).parent / "uploads")
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()
