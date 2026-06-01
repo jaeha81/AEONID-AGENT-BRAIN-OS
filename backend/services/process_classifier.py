@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass
-import anthropic
+from google import genai
+from ..config import settings
 
 PROCESS_CATEGORIES: dict[str, str] = {
     "철거": "기존 구조물 해체 및 철거 작업",
@@ -57,20 +58,16 @@ def classify_items(items: list[dict]) -> list[Classification]:
         for i, item in enumerate(items)
     )
 
-    client = anthropic.Anthropic()
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=2048,
-        messages=[{
-            "role": "user",
-            "content": CLASSIFICATION_PROMPT.format(
-                categories=categories_text,
-                items=items_text
-            )
-        }]
+    client = genai.Client(api_key=settings.gemini_api_key)
+    response = client.models.generate_content(
+        model="gemini-1.5-flash",
+        contents=CLASSIFICATION_PROMPT.format(
+            categories=categories_text,
+            items=items_text
+        )
     )
 
-    return _parse_classifications(message.content[0].text, len(items))
+    return _parse_classifications(response.text, len(items))
 
 def _parse_classifications(response_text: str, item_count: int) -> list[Classification]:
     start = response_text.find("{")

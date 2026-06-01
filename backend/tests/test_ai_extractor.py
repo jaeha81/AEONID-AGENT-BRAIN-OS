@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch, MagicMock
 from backend.services.ai_extractor import extract_items, ExtractedEstimate
 
@@ -26,16 +25,13 @@ MOCK_RESPONSE_JSON = """{
   "total_amount": 2500000
 }"""
 
-def test_extract_items_returns_extracted_estimate(monkeypatch):
-    mock_content = MagicMock()
-    mock_content.text = MOCK_RESPONSE_JSON
-    mock_msg = MagicMock()
-    mock_msg.content = [mock_content]
-
+def test_extract_items_returns_extracted_estimate():
+    mock_response = MagicMock()
+    mock_response.text = MOCK_RESPONSE_JSON
     mock_client = MagicMock()
-    mock_client.messages.create.return_value = mock_msg
+    mock_client.models.generate_content.return_value = mock_response
 
-    with patch("backend.services.ai_extractor.anthropic.Anthropic", return_value=mock_client):
+    with patch("backend.services.ai_extractor.genai.Client", return_value=mock_client):
         result = extract_items(SAMPLE_RAW)
 
     assert isinstance(result, ExtractedEstimate)
@@ -44,16 +40,13 @@ def test_extract_items_returns_extracted_estimate(monkeypatch):
     assert result.total_amount == 2500000
     assert result.site_name == "강남구 역삼동 000호"
 
-def test_extract_items_handles_malformed_json(monkeypatch):
-    mock_content = MagicMock()
-    mock_content.text = "죄송합니다, 견적서를 분석할 수 없습니다."
-    mock_msg = MagicMock()
-    mock_msg.content = [mock_content]
-
+def test_extract_items_handles_malformed_json():
+    mock_response = MagicMock()
+    mock_response.text = "죄송합니다, 견적서를 분석할 수 없습니다."
     mock_client = MagicMock()
-    mock_client.messages.create.return_value = mock_msg
+    mock_client.models.generate_content.return_value = mock_response
 
-    with patch("backend.services.ai_extractor.anthropic.Anthropic", return_value=mock_client):
+    with patch("backend.services.ai_extractor.genai.Client", return_value=mock_client):
         result = extract_items({"text": "not a real estimate", "tables": []})
 
     assert isinstance(result, ExtractedEstimate)

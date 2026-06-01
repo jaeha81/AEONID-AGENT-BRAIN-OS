@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass, field
-import anthropic
+from google import genai
+from ..config import settings
 
 EXTRACTION_PROMPT = """당신은 인테리어 공사 견적서 분석 전문가입니다.
 아래 견적서 내용에서 견적 항목들을 추출하여 JSON으로 반환하세요.
@@ -39,18 +40,13 @@ class ExtractedEstimate:
 def extract_items(raw_content: dict) -> ExtractedEstimate:
     content_text = _build_content_text(raw_content)
 
-    client = anthropic.Anthropic()
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=4096,
-        messages=[{
-            "role": "user",
-            "content": EXTRACTION_PROMPT.format(content=content_text[:10000])
-        }]
+    client = genai.Client(api_key=settings.gemini_api_key)
+    response = client.models.generate_content(
+        model="gemini-1.5-flash",
+        contents=EXTRACTION_PROMPT.format(content=content_text[:10000])
     )
 
-    response_text = message.content[0].text
-    return _parse_response(response_text)
+    return _parse_response(response.text)
 
 def _build_content_text(raw_content: dict) -> str:
     text = raw_content.get("text", "")

@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch, MagicMock
 from backend.services.process_classifier import classify_items, Classification, PROCESS_CATEGORIES
 
@@ -16,15 +15,13 @@ MOCK_CLASSIFICATION_JSON = """{
   ]
 }"""
 
-def test_classify_items_returns_classifications(monkeypatch):
-    mock_content = MagicMock()
-    mock_content.text = MOCK_CLASSIFICATION_JSON
-    mock_msg = MagicMock()
-    mock_msg.content = [mock_content]
+def test_classify_items_returns_classifications():
+    mock_response = MagicMock()
+    mock_response.text = MOCK_CLASSIFICATION_JSON
     mock_client = MagicMock()
-    mock_client.messages.create.return_value = mock_msg
+    mock_client.models.generate_content.return_value = mock_response
 
-    with patch("backend.services.process_classifier.anthropic.Anthropic", return_value=mock_client):
+    with patch("backend.services.process_classifier.genai.Client", return_value=mock_client):
         results = classify_items(SAMPLE_ITEMS)
 
     assert len(results) == 3
@@ -42,15 +39,13 @@ def test_process_categories_contains_required_keys():
     for cat in required:
         assert cat in PROCESS_CATEGORIES, f"'{cat}' 카테고리가 PROCESS_CATEGORIES에 없습니다"
 
-def test_classify_handles_malformed_json(monkeypatch):
-    mock_content = MagicMock()
-    mock_content.text = "분류할 수 없습니다"
-    mock_msg = MagicMock()
-    mock_msg.content = [mock_content]
+def test_classify_handles_malformed_json():
+    mock_response = MagicMock()
+    mock_response.text = "분류할 수 없습니다"
     mock_client = MagicMock()
-    mock_client.messages.create.return_value = mock_msg
+    mock_client.models.generate_content.return_value = mock_response
 
-    with patch("backend.services.process_classifier.anthropic.Anthropic", return_value=mock_client):
+    with patch("backend.services.process_classifier.genai.Client", return_value=mock_client):
         results = classify_items(SAMPLE_ITEMS)
 
     assert len(results) == 3
