@@ -1,5 +1,7 @@
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel, Field
+
 
 class EstimateItemOut(BaseModel):
     id: int
@@ -21,7 +23,7 @@ class EstimateOut(BaseModel):
     status: str
     total_amount: float
     created_at: datetime
-    items: list[EstimateItemOut] = []
+    items: list[EstimateItemOut] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 

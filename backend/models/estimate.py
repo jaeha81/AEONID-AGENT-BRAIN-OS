@@ -1,22 +1,29 @@
-from datetime import datetime
-from sqlalchemy import String, Integer, Float, DateTime, ForeignKey, Text
+from datetime import UTC, datetime
+
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from ..database import Base
+
 
 class Estimate(Base):
     __tablename__ = "estimates"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    site_name: Mapped[str] = mapped_column(String(200), default="미지정현장")
+    site_name: Mapped[str] = mapped_column(String(200), default="미정 현장")
     original_filename: Mapped[str] = mapped_column(String(500))
     file_path: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str] = mapped_column(String(50), default="pending")
     total_amount: Mapped[float] = mapped_column(Float, default=0.0)
     obsidian_estimate_path: Mapped[str | None] = mapped_column(String(500))
     obsidian_budget_path: Mapped[str | None] = mapped_column(String(500))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
 
-    items: Mapped[list["EstimateItem"]] = relationship("EstimateItem", back_populates="estimate")
+    items: Mapped[list["EstimateItem"]] = relationship(
+        "EstimateItem",
+        back_populates="estimate",
+    )
+
 
 class EstimateItem(Base):
     __tablename__ = "estimate_items"

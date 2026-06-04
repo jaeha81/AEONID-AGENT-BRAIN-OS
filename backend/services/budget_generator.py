@@ -1,6 +1,8 @@
-from dataclasses import dataclass, field
 from collections import defaultdict
+from dataclasses import dataclass, field
+
 from .process_classifier import Classification
+
 
 @dataclass
 class BudgetItem:
@@ -14,6 +16,7 @@ class BudgetItem:
     category: str
     confidence: float
 
+
 @dataclass
 class BudgetCategory:
     name: str
@@ -21,15 +24,17 @@ class BudgetCategory:
     subtotal: float = 0.0
     item_count: int = 0
 
+
 @dataclass
 class ExecutionBudget:
     categories: list[BudgetCategory] = field(default_factory=list)
     total_amount: float = 0.0
     item_count: int = 0
 
+
 def generate_budget(
     items: list[dict],
-    classifications: list[Classification]
+    classifications: list[Classification],
 ) -> ExecutionBudget:
     if not items:
         return ExecutionBudget()
@@ -58,12 +63,14 @@ def generate_budget(
     budget_categories = []
     for cat_name, cat_items in category_groups.items():
         subtotal = sum(item.total_price for item in cat_items)
-        budget_categories.append(BudgetCategory(
-            name=cat_name,
-            items=cat_items,
-            subtotal=subtotal,
-            item_count=len(cat_items),
-        ))
+        budget_categories.append(
+            BudgetCategory(
+                name=cat_name,
+                items=cat_items,
+                subtotal=subtotal,
+                item_count=len(cat_items),
+            )
+        )
 
     budget_categories.sort(key=lambda c: c.subtotal, reverse=True)
     total = sum(c.subtotal for c in budget_categories)

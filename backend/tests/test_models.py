@@ -1,7 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 from backend.database import Base
 from backend.models.estimate import Estimate, EstimateItem
+
 
 def test_estimate_model_creation():
     engine = create_engine("sqlite:///:memory:")
@@ -18,6 +20,7 @@ def test_estimate_model_creation():
     assert est.site_name == "테스트현장"
     assert est.status == "pending"
     db.close()
+
 
 def test_estimate_item_relationship():
     engine = create_engine("sqlite:///:memory:")
@@ -37,7 +40,7 @@ def test_estimate_item_relationship():
         unit="장",
         unit_price=5000,
         total_price=500000,
-        process_category="타일"
+        process_category="타일",
     )
     db.add(item)
     db.commit()

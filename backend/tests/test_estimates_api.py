@@ -1,29 +1,48 @@
-import pytest
-from fastapi.testclient import TestClient
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-from backend.main import app
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from backend.services.ai_extractor import ExtractedEstimate
-from backend.services.process_classifier import Classification
-from backend.services.budget_generator import ExecutionBudget, BudgetCategory, BudgetItem
+from backend.services.budget_generator import BudgetCategory, BudgetItem, ExecutionBudget
 from backend.services.obsidian_writer import ObsidianPaths
+from backend.services.process_classifier import Classification
 
 MOCK_EXTRACTED = ExtractedEstimate(
-    items=[{"name": "타일공사", "specification": "300x300", "quantity": 100, "unit": "장", "unit_price": 5000, "total_price": 500000, "notes": ""}],
+    items=[
+        {
+            "name": "타일공사",
+            "specification": "300x300",
+            "quantity": 100,
+            "unit": "장",
+            "unit_price": 5000,
+            "total_price": 500000,
+            "notes": "",
+        }
+    ],
     site_name="강남현장",
-    total_amount=500000
+    total_amount=500000,
 )
 MOCK_CLASSIFICATIONS = [Classification(0, "타일", 0.97, "바닥타일")]
 MOCK_BUDGET = ExecutionBudget(
-    categories=[BudgetCategory("타일", [BudgetItem("타일공사","300x300",100,"장",5000,500000,"","타일",0.97)], 500000, 1)],
+    categories=[
+        BudgetCategory(
+            "타일",
+            [BudgetItem("타일공사", "300x300", 100, "장", 5000, 500000, "", "타일", 0.97)],
+            500000,
+            1,
+        )
+    ],
     total_amount=500000,
-    item_count=1
+    item_count=1,
 )
 MOCK_PATHS = ObsidianPaths("/vault/견적.md", "/vault/예산.md")
 
+
 @pytest.fixture
-def sample_excel(tmp_path):
+def sample_excel(tmp_path: Path):
     import openpyxl
+
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.append(["항목명", "규격", "수량", "단위", "단가", "합계"])
@@ -31,6 +50,7 @@ def sample_excel(tmp_path):
     path = tmp_path / "estimate.xlsx"
     wb.save(path)
     return path
+
 
 def test_upload_estimate_returns_201(client, sample_excel):
     with patch("backend.routers.estimates.parse_document") as mock_parse, \
@@ -44,7 +64,13 @@ def test_upload_estimate_returns_201(client, sample_excel):
         with open(sample_excel, "rb") as f:
             response = client.post(
                 "/estimates/upload",
-                files={"file": ("estimate.xlsx", f, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+                files={
+                    "file": (
+                        "estimate.xlsx",
+                        f,
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    )
+                },
             )
 
     assert response.status_code == 201
@@ -52,6 +78,7 @@ def test_upload_estimate_returns_201(client, sample_excel):
     assert "id" in data
     assert data["site_name"] == "강남현장"
     assert data["status"] == "completed"
+
 
 def test_get_estimate_budget_returns_budget(client, sample_excel):
     with patch("backend.routers.estimates.parse_document") as mock_parse, \
@@ -65,7 +92,13 @@ def test_get_estimate_budget_returns_budget(client, sample_excel):
         with open(sample_excel, "rb") as f:
             upload_resp = client.post(
                 "/estimates/upload",
-                files={"file": ("estimate.xlsx", f, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+                files={
+                    "file": (
+                        "estimate.xlsx",
+                        f,
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    )
+                },
             )
         est_id = upload_resp.json()["id"]
 
@@ -74,6 +107,7 @@ def test_get_estimate_budget_returns_budget(client, sample_excel):
     data = budget_resp.json()
     assert "categories" in data
     assert data["total_amount"] == 500000
+
 
 def test_get_nonexistent_estimate_returns_404(client):
     response = client.get("/estimates/99999/budget")
